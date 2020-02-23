@@ -84,6 +84,30 @@ func NewWinDivertHandleWithFlags(filter string, flags uint8) (*WinDivertHandle, 
 	return winDivertHandle, nil
 }
 
+// Create a new WinDivertHandle by calling WinDivertOpen and returns it
+// https://reqrypt.org/windivert-doc.html#divert_open
+func WinDivertOpen(filter string, layer uint8, priority uint16, flags uint8) (*WinDivertHandle, error) {
+	filterBytePtr, err := syscall.BytePtrFromString(filter)
+	if err != nil {
+		return nil, err
+	}
+
+	handle, _, err := winDivertOpen.Call(uintptr(unsafe.Pointer(filterBytePtr)),
+		uintptr(layer),
+		uintptr(priority),
+		uintptr(flags))
+
+	if handle == uintptr(syscall.InvalidHandle) {
+		return nil, err
+	}
+
+	winDivertHandle := &WinDivertHandle{
+		handle: handle,
+		open:   true,
+	}
+	return winDivertHandle, nil
+}
+
 // Close the Handle
 // See https://reqrypt.org/windivert-doc.html#divert_close
 func (wd *WinDivertHandle) Close() error {
